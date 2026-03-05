@@ -50,7 +50,9 @@ function runType(args: string[]) {
   for (const pathObj of paths) {
     const filePath = path.join(pathObj, arg);
     if (fs.existsSync(filePath)) {
+      try {
       fs.accessSync(filePath, fs.constants.X_OK);
+      } catch {}
       console.log(`${arg} is ${filePath}`);
       return;
     }
