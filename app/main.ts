@@ -9,11 +9,20 @@ const rl = createInterface({
 rl.prompt();
 
 rl.on("line", (line: string) => {
-  if (line.trim() === "exit") {
-    rl.close();
-    return;
-  }
+  const [ command, ...args ] = line.trim().split(" ");
+  // const args = line.trim().split(" ").slice(1);
 
-  console.error(`${line}: command not found`);
-  rl.prompt();
+  switch (command) {
+    case "exit":
+      rl.close();
+      break;
+    case "echo":
+      console.log(args.join("  \n"));
+      rl.prompt();
+      break;
+    default:
+      console.error(`${line}: command not found`);
+      rl.prompt();
+      break;
+  }
 });
