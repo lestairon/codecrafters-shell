@@ -8,7 +8,12 @@ const rl = createInterface({
 
 rl.prompt();
 
-rl.on("line", (line) => {
-  console.error(`${line}: command not found`)
+rl.on("line", (line: string) => {
+  if (line.trim() === "exit") {
+    rl.close();
+    return;
+  }
+
+  console.error(`${line}: command not found`);
   rl.prompt();
 });
