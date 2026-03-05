@@ -52,9 +52,9 @@ function runType(args: string[]) {
     if (fs.existsSync(filePath)) {
       try {
       fs.accessSync(filePath, fs.constants.X_OK);
-      } catch {}
       console.log(`${arg} is ${filePath}`);
       return;
+      } catch {}
     }
   }
 
