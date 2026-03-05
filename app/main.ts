@@ -17,7 +17,7 @@ rl.on("line", (line: string) => {
       rl.close();
       break;
     case "echo":
-      console.log(args.join("  \n"));
+      console.log(args.join(" "));
       rl.prompt();
       break;
     default:
