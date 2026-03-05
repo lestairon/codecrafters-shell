@@ -1,4 +1,6 @@
 import { createInterface } from "readline";
+import fs from "node:fs";
+import path from "node:path";
 
 const rl = createInterface({
   input: process.stdin,
@@ -8,35 +10,26 @@ const rl = createInterface({
 
 rl.prompt();
 
-const commands = [
-  { name: "exit", description: "Exit the shell" },
-  { name: "echo", description: "Echo the arguments" },
-  { name: "type", description: "Type the arguments" },
+interface Command {
+  name: string;
+  description: string;
+  run: (args: string[]) => void;
+}
+
+const commands: Command[] = [
+  { name: "exit", description: "Exit the shell", run: runExit },
+  { name: "echo", description: "Echo the arguments", run: (args: string[]) => console.log(args.join(" ")) },
+  { name: "type", description: "Type the arguments", run: runType },
 ];
 
 rl.on("line", (line: string) => {
   const { command, args } = parseCommand(line);
-  // const args = line.trim().split(" ").slice(1);
+  const commandObj = commands.find((c) => c.name === command);
 
-  switch (command) {
-    case "exit":
-      rl.close();
-      break;
-    case "echo":
-      console.log(args.join(" "));
-      rl.prompt();
-      break;
-    case "type":
-      const arg = args.join(" ");
-      if (commands.some((c) => c.name === arg)) console.log(`${arg} is a shell builtin`);
-      else console.log(`${arg}: not found`);
-      rl.prompt();
-      break;
-    default:
-      console.error(`${line}: command not found`);
-      rl.prompt();
-      break;
-  }
+  if (commandObj) commandObj.run(args);
+  else console.error(`${line}: command not found`);
+
+  rl.prompt();
 });
 
 function parseCommand(line: string) {
@@ -44,16 +37,29 @@ function parseCommand(line: string) {
   return { command: command.toLowerCase(), args };
 }
 
-// function runCommand(command: string, args: string[]) {
+function runType(args: string[]) {
+  const [arg] = args;
+  const command = commands.find((c) => c.name === arg);
+  const paths = process.env.PATH?.split(path.delimiter) ?? [];
 
-//   const command = commands.find((c) => c.name === command);
+  if (command) {
+    console.log(`${arg} is a shell builtin`);
+    return;
+  }
 
-//   switch (command) {
-//     case "exit":
-//       rl.close();
-//       break;
-//     case "echo":
-//       console.log(args.join(" "));
-//       break;
-//   }
-// }
+  for (const pathObj of paths) {
+    const filePath = path.join(pathObj, arg);
+    if (fs.existsSync(filePath)) {
+      fs.accessSync(filePath, fs.constants.X_OK);
+      console.log(`${arg} is ${pathObj}`);
+      return;
+    }
+  }
+
+  console.log(`${arg}: not found`);
+}
+
+function runExit() {
+  rl.close();
+  process.exit(0);
+}

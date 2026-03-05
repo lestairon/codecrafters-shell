@@ -1,0 +1,14 @@
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H1","location":"app/main.ts:11","message":"readline interface created","data":{},"timestamp":1772694549155}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H3","location":"app/main.ts:40","message":"readline close event","data":{},"timestamp":1772694549156}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H1","location":"app/main.ts:11","message":"readline interface created","data":{},"timestamp":1772694555729}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H3","location":"app/main.ts:40","message":"readline close event","data":{},"timestamp":1772694555731}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H1","location":"app/main.ts:11","message":"readline interface created","data":{"stdinIsTTY":true},"timestamp":1772694667773}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H2","location":"app/main.ts:26","message":"line event received","data":{"lineLength":2},"timestamp":1772694715358}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H2","location":"app/main.ts:26","message":"line event received","data":{"lineLength":7},"timestamp":1772694718996}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H3","location":"app/main.ts:40","message":"readline close event","data":{},"timestamp":1772694764225}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H1","location":"app/main.ts:11","message":"readline interface created","data":{"stdinIsTTY":true},"timestamp":1772694767842}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H2","location":"app/main.ts:26","message":"line event received","data":{"lineLength":7},"timestamp":1772694923849}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H2","location":"app/main.ts:26","message":"line event received","data":{"lineLength":7},"timestamp":1772695159342}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H2","location":"app/main.ts:26","message":"line event received","data":{"lineLength":7},"timestamp":1772695237151}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H2","location":"app/main.ts:26","message":"line event received","data":{"lineLength":7},"timestamp":1772734016371}
+{"sessionId":"fdd9a1","runId":"initial","hypothesisId":"H3","location":"app/main.ts:40","message":"readline close event","data":{},"timestamp":1772734156100}
