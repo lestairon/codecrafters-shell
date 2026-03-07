@@ -1,14 +1,19 @@
-export type ParseState = {
-  readonly tokens: readonly Token[];
-  readonly current: string;
-  readonly inSingleQuote: boolean;
-  readonly tokenStarted: boolean;
-  readonly hasSingleQuotedSegment: boolean;
-};
+export enum Quote {
+  Single = "single",
+  Double = "double",
+}
 
 export type Token = {
   readonly value: string;
-  readonly singleQuoted: boolean;
+  readonly quote: Quote | null;
+};
+
+export type ParseState = {
+  readonly tokens: readonly Token[];
+  readonly current: string;
+  readonly quoteContext: Quote | null;
+  readonly tokenStarted: boolean;
+  readonly tokenQuoteType: Quote | null;
 };
 
 export type ParseSuccess = {

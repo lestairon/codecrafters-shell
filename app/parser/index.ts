@@ -1,88 +1,86 @@
-import type { Token, ParseError, ParseResult, ParseState, ParseSuccess } from "./types"; 
+import type { Token, ParseError, ParseResult, ParseState, ParseSuccess } from "./types";
+import { Quote } from "./types";
 
-function success(
-  tokens: Token[],
-  values: string[],
-  singleQuotedIndices: Set<number>
-): ParseSuccess {
+function ok(tokens: Token[], values: string[], singleQuotedIndices: Set<number>): ParseSuccess {
   return { ok: true, tokens, values, singleQuotedIndices };
 }
 
-function unmatchedQuote(): ParseError {
+function errUnmatchedQuote(): ParseError {
+  return { ok: false, error: "unmatched_quote", message: "unmatched quote" };
+}
+
+const INIT: ParseState = {
+  tokens: [],
+  current: "",
+  quoteContext: null,
+  tokenStarted: false,
+  tokenQuoteType: null,
+};
+
+function append(state: ParseState, ch: string): ParseState {
+  return { ...state, tokenStarted: true, current: state.current + ch };
+}
+
+function emitToken(state: ParseState): ParseState {
+  const token: Token = { value: state.current, quote: state.tokenQuoteType };
   return {
-    ok: false,
-    error: "unmatched_quote",
-    message: "unmatched quote",
+    ...state,
+    tokens: [...state.tokens, token],
+    current: "",
+    tokenStarted: false,
+    tokenQuoteType: null,
   };
 }
 
-const initial: ParseState = {
-  tokens: [],
-  current: "",
-  inSingleQuote: false,
-  tokenStarted: false,
-  hasSingleQuotedSegment: false,
-};
+function handleQuote(state: ParseState, kind: Quote, ch: string): ParseState {
+  if (!state.quoteContext) {
+    return {
+      ...state,
+      tokenStarted: true,
+      quoteContext: kind,
+      tokenQuoteType:
+        kind === Quote.Single ? Quote.Single : (state.tokenQuoteType ?? Quote.Double),
+    };
+  }
+
+  if (state.quoteContext === kind) {
+    return { ...state, quoteContext: null };
+  }
+
+  return append(state, ch);
+}
 
 function onChar(state: ParseState, ch: string): ParseState {
-  switch (ch) {
-    case "'":
-    case '"': {
-      return {
-        ...state,
-        tokenStarted: true,
-        hasSingleQuotedSegment: true,
-        inSingleQuote: !state.inSingleQuote,
-      };
-    }
-    case " ": {
-      if (state.inSingleQuote) {
-        return { ...state, tokenStarted: true, current: state.current + ch };
-      }
-      if (!state.tokenStarted) return state;
+  if (ch === "'") return handleQuote(state, Quote.Single, ch);
+  if (ch === '"') return handleQuote(state, Quote.Double, ch);
 
-      return {
-        tokens: [
-          ...state.tokens,
-          { value: state.current, singleQuoted: state.hasSingleQuotedSegment },
-        ],
-        current: "",
-        inSingleQuote: false,
-        tokenStarted: false,
-        hasSingleQuotedSegment: false,
-      };
-    }
-    default: {
-      return {
-        ...state,
-        tokenStarted: true,
-        current: state.current + ch,
-      };
-    }
+  if (ch === " ") {
+    if (state.quoteContext) return append(state, ch);
+    if (!state.tokenStarted) return state;
+
+    return emitToken(state);
   }
+
+  return append(state, ch);
 }
 
 function finish(state: ParseState): ParseResult {
-  if (state.inSingleQuote) {
-    return unmatchedQuote();
-  }
+  if (state.quoteContext) return errUnmatchedQuote();
 
-  const tokens: Token[] = state.tokenStarted
-    ? [
-        ...state.tokens,
-        { value: state.current, singleQuoted: state.hasSingleQuotedSegment },
-      ]
-    : [...state.tokens];
+  const stateAfter = state.tokenStarted
+    ? emitToken(state)
+    : state;
+  const tokens = [...stateAfter.tokens];
   const values = tokens.map((t) => t.value);
   const singleQuotedIndices = new Set(
-    tokens.map((t, i) => (t.singleQuoted ? i : -1)).filter((i) => i >= 0)
+    tokens.map((t, i) => (t.quote === Quote.Single ? i : -1)).filter((i) => i >= 0)
   );
 
-  return success(tokens, values, singleQuotedIndices);
+  return ok(tokens, values, singleQuotedIndices);
 }
 
 export function parseLine(line: string): ParseResult {
-  const state = [...line].reduce<ParseState>(onChar, initial);
+  const state = [...line].reduce(onChar, INIT);
   return finish(state);
 }
 
