@@ -2,12 +2,15 @@ import type { Command } from "../types";
 import resolveCommand from "../resolver";
 import rl from '../main';
 import path from 'node:path';
+import { chdir } from "node:process";
+import { checkAccess } from "../resolver/helpers";
 
 const commands: Command[] = [
   { name: "exit", description: "Exit the shell", run: runExit },
   { name: "echo", description: "Echo the arguments", run: (args: string[]) => console.log(args.join(" ")) },
   { name: "type", description: "Type the arguments", run: runType },
-  { name: 'pwd', description: "Prints working directory", run: () => console.log(process.env.PWD) }
+  { name: 'pwd', description: "Prints working directory", run: () => console.log(process.cwd()) },
+  { name: 'cd', description: "Changes the current directory", run: runCd },
 ];
 
 function runType(args: string[]) {
@@ -32,6 +35,18 @@ function runType(args: string[]) {
 function runExit() {
   rl.close();
   process.exit(0);
+}
+
+function runCd([arg]: string[]) {
+  const normalizedPath = path.normalize(arg);
+
+  if (!checkAccess(normalizedPath)) {
+    console.log(`cd: ${arg}: No such file or directory`);
+
+    return;
+  }
+
+  chdir(normalizedPath);
 }
 
 export default commands;

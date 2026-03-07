@@ -18,10 +18,6 @@ function runCommand(commandResult: ResolveCommandResult, args: string[]) {
 }
 
 function runExternal(command: ExternalCommand, args: string[]) {
-  if (command.path !== cwd()) {
-    chdir(command.path)
-  }
-
   spawnSync(command.name, args, {
     stdio: 'inherit'
   });

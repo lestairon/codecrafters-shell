@@ -42,5 +42,6 @@ function checkAccess(file: string): boolean {
 export {
   findBuiltIn,
   findInCwd,
-  findInPath
+  findInPath,
+  checkAccess
 };
