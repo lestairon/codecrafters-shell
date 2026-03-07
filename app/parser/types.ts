@@ -14,6 +14,7 @@ export type ParseState = {
   readonly quoteContext: Quote | null;
   readonly tokenStarted: boolean;
   readonly tokenQuoteType: Quote | null;
+  readonly escaped: boolean;
 };
 
 export type ParseSuccess = {
