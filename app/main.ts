@@ -1,11 +1,12 @@
 import { createInterface } from "readline";
 import fs from "node:fs";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
+import { stdin, stdout, cwd, chdir } from 'node:process'
 
 const rl = createInterface({
-  input: process.stdin,
-  output: process.stdout,
+  input: stdin,
+  output: stdout,
   prompt: "$ ",
 });
 
@@ -34,25 +35,28 @@ rl.on("line", (line: string) => {
 
     return;
   } else {
-    const cwd = process.cwd();
-    const filePath = path.join(cwd, command);
-    
-    // console.log(fs.existsSync(filePath), filePath);
-    if (fs.existsSync(filePath) && checkAccess(filePath)) {
-      // console.log({ filePath, args })
-      console.log(execFileSync(filePath, args));
+    const filePath = path.join(cwd(), command);
 
+    if (fs.existsSync(filePath) && checkAccess(filePath)) {
+      chdir(cwd());
+      const result = spawnSync(command, args, {
+        encoding: 'utf8'
+      });
+
+      console.log(result.stdout);
       rl.prompt();
       return;
     } else {
       for (const dir of paths) {
-        const fullPath = path.join(dir, command);
+        const filePath = path.join(dir, command);
 
-        if (fs.existsSync(fullPath) && checkAccess(fullPath)) {
-          console.log(execFileSync(fullPath, args, {
+        if (fs.existsSync(filePath) && checkAccess(filePath)) {
+          chdir(dir);
+          const result = spawnSync(command, args, {
             encoding: 'utf8'
-          }));
+          });
 
+          console.log(result.stdout);
           rl.prompt();
           return;
         }
