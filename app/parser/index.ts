@@ -26,7 +26,8 @@ const initial: ParseState = {
 
 function onChar(state: ParseState, ch: string): ParseState {
   switch (ch) {
-    case "'": {
+    case "'":
+    case '"': {
       return {
         ...state,
         tokenStarted: true,
