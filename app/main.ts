@@ -38,11 +38,11 @@ rl.on("line", (line: string) => {
     const filePath = path.join(cwd(), command);
 
     if (fs.existsSync(filePath) && checkAccess(filePath)) {
-      const result = spawnSync(command, args, {
-        encoding: 'inherit'
+      spawnSync(command, args, {
+        stdio: 'inherit'
       });
 
-      console.log(result.stdout);
+      // console.log(result.stdout);
       rl.prompt();
       return;
     } else {
@@ -51,11 +51,11 @@ rl.on("line", (line: string) => {
 
         if (fs.existsSync(filePath) && checkAccess(filePath)) {
           chdir(dir);
-          const result = spawnSync(command, args, {
-            encoding: 'inherit'
+          spawnSync(command, args, {
+            stdio: 'inherit'
           });
 
-          console.log(result.stdout);
+          // console.log(result.stdout);
           rl.prompt();
           return;
         }
