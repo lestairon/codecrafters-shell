@@ -1,5 +1,5 @@
 import type { Command } from "../types";
-import resolveCommand from "../resolver";
+import resolveCommand, { resolveHomeDir } from "../resolver";
 import rl from '../main';
 import path from 'node:path';
 import { chdir } from "node:process";
@@ -38,7 +38,8 @@ function runExit() {
 }
 
 function runCd([arg]: string[]) {
-  const normalizedPath = path.normalize(arg);
+  const resolvedPath = resolveHomeDir(arg);
+  const normalizedPath = path.normalize(resolvedPath);
 
   if (!checkAccess(normalizedPath)) {
     console.log(`cd: ${arg}: No such file or directory`);
