@@ -7,6 +7,7 @@ const commands: Command[] = [
   { name: "exit", description: "Exit the shell", run: runExit },
   { name: "echo", description: "Echo the arguments", run: (args: string[]) => console.log(args.join(" ")) },
   { name: "type", description: "Type the arguments", run: runType },
+  { name: 'pwd', description: "Prints working directory", run: () => console.log(process.env.PWD) }
 ];
 
 function runType(args: string[]) {
