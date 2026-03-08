@@ -7,13 +7,25 @@ type CompletionResult = [string[], string];
 enum CompletionActionKind {
 	NONE = "none",
 	SINGLE = "single",
+	PARTIAL = "partial",
 	SHOW_ALL = "showAll",
 }
 
 type CompletionAction =
 	| { kind: CompletionActionKind.NONE; bell: boolean }
 	| { kind: CompletionActionKind.SINGLE; name: string; prefix: string }
+	| { kind: CompletionActionKind.PARTIAL; lcp: string; prefix: string }
 	| { kind: CompletionActionKind.SHOW_ALL; line: string; names: string[] };
+
+function sharedPrefix(a: string, b: string): string {
+	const end = [...a].findIndex((ch, i) => ch !== b[i]);
+	return end === -1 ? a : a.slice(0, end);
+}
+
+function longestCommonPrefix(names: string[]): string {
+	if (!names.length) return "";
+	return names.reduce(sharedPrefix);
+}
 
 function determineCompletion(
 	line: string,
@@ -40,6 +52,11 @@ function determineCompletion(
 			null,
 		];
 
+	const lcp = longestCommonPrefix(uniqueNames);
+
+	if (lcp.length > prefix.length)
+		return [{ kind: CompletionActionKind.PARTIAL, lcp, prefix }, null];
+
 	if (lastTab === line)
 		return [
 			{ kind: CompletionActionKind.SHOW_ALL, line, names: uniqueNames },
@@ -60,6 +77,8 @@ function applyCompletionAction(
 			return [[], line];
 		case CompletionActionKind.SINGLE:
 			return [[`${action.name} `], action.prefix];
+		case CompletionActionKind.PARTIAL:
+			return [[action.lcp], action.prefix];
 		case CompletionActionKind.SHOW_ALL:
 			out.write(`\n${action.names.join("  ")}\n$ ${action.line}`);
 			return [[], line];
