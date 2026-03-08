@@ -22,18 +22,27 @@ export function runCommand(
 	commandResult: ResolveCommandResult,
 	args: string[],
 	redirect?: Redirect,
+	io: CommandIO = DEFAULT_IO,
 ) {
 	const command = getCommand(commandResult);
 
 	if (!redirect) {
-		command.run(args, DEFAULT_IO);
+		command.run(args, io);
 		return;
 	}
 
-	const fd = openSync(
-		redirect.target.value,
-		redirect.operator.value.includes(">>") ? "a" : "w",
-	);
+	let fd: number;
+	try {
+		fd = openSync(
+			redirect.target.value,
+			redirect.operator.value.includes(">>") ? "a" : "w",
+		);
+	} catch (err) {
+		const msg = err instanceof Error ? err.message : String(err);
+		io.stderr.write(`${redirect.target.value}: ${msg}\n`);
+		return;
+	}
+
 	try {
 		const fileWritable = {
 			write: (data: string) => {
@@ -41,16 +50,16 @@ export function runCommand(
 				return true;
 			},
 		};
-		const io: CommandIO = {
+		const redirectedIO: CommandIO = {
 			stdout: redirect.operator.value.startsWith("2")
-				? DEFAULT_IO.stdout
+				? io.stdout
 				: fileWritable,
 			stderr: redirect.operator.value.startsWith("2")
 				? fileWritable
-				: DEFAULT_IO.stderr,
+				: io.stderr,
 		};
 
-		command.run(args, io);
+		command.run(args, redirectedIO);
 	} finally {
 		closeSync(fd);
 	}

@@ -1,7 +1,7 @@
 import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline";
 import { createCompleter } from "./completer";
-import { builtinNames } from "./executer/builtins";
+import { builtinNames, setShutdown } from "./executer/builtins";
 import { handleLine } from "./handler";
 import { setBuiltinNames } from "./resolver";
 
@@ -14,7 +14,10 @@ const rl = createInterface({
 	completer: createCompleter(stdout),
 });
 
+setShutdown(() => {
+	rl.close();
+	process.exit(0);
+});
+
 rl.prompt();
 rl.on("line", (line) => handleLine(line, () => rl.prompt()));
-
-export default rl;

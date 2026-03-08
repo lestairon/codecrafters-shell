@@ -1,4 +1,5 @@
 import { parseLine, structureLine } from "./parser";
+import type { CommandLine } from "./parser/types";
 import { searchCommands } from "./resolver";
 import type { Writable } from "./types";
 
@@ -35,7 +36,13 @@ function determineCompletion(
 	if (!result.ok)
 		return [{ kind: CompletionActionKind.NONE, bell: true }, lastTab];
 
-	const commandLine = structureLine(result.tokens);
+	let commandLine: CommandLine;
+	try {
+		commandLine = structureLine(result.tokens);
+	} catch {
+		return [{ kind: CompletionActionKind.NONE, bell: true }, lastTab];
+	}
+
 	if (!commandLine.command)
 		return [{ kind: CompletionActionKind.NONE, bell: true }, lastTab];
 

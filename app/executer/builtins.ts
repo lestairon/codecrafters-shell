@@ -1,10 +1,15 @@
 import path from "node:path";
 import { chdir } from "node:process";
-import rl from "../main";
 import resolveCommand, { resolveHomeDir } from "../resolver";
 import { checkAccess } from "../resolver/helpers";
 import type { Command, CommandIO } from "../types";
 import { CommandKind } from "../types";
+
+let shutdown: () => void = () => {};
+
+export function setShutdown(fn: () => void) {
+	shutdown = fn;
+}
 
 const commands: Command[] = [
 	{ name: "exit", description: "Exit the shell", run: runExit },
@@ -23,6 +28,11 @@ const commands: Command[] = [
 ];
 
 function runType(args: string[], io: CommandIO) {
+	if (!args.length) {
+		io.stderr.write("type: missing argument\n");
+		return;
+	}
+
 	const [cmd] = args;
 	const result = resolveCommand(cmd);
 
@@ -42,16 +52,15 @@ function runType(args: string[], io: CommandIO) {
 }
 
 function runExit() {
-	rl.close();
-	process.exit(0);
+	shutdown();
 }
 
 function runCd([arg]: string[], io: CommandIO) {
-	const resolvedPath = resolveHomeDir(arg);
+	const resolvedPath = resolveHomeDir(arg ?? "~");
 	const normalizedPath = path.normalize(resolvedPath);
 
 	if (!checkAccess(normalizedPath)) {
-		io.stderr.write(`cd: ${arg}: No such file or directory\n`);
+		io.stderr.write(`cd: ${resolvedPath}: No such file or directory\n`);
 
 		return;
 	}

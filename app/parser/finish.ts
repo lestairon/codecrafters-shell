@@ -1,4 +1,4 @@
-import { append, emitToken } from "./state";
+import { append, emitOperator, emitToken } from "./state";
 import type {
 	ParseError,
 	ParseResult,
@@ -27,9 +27,12 @@ function finish(state: ParseState): ParseResult {
 
 	if (normalized.quoteContext) return errUnmatchedQuote();
 
-	const stateAfter = normalized.tokenStarted
-		? emitToken(normalized)
-		: normalized;
+	let stateAfter = normalized.tokenStarted ? emitToken(normalized) : normalized;
+
+	if (stateAfter.pendingRedirect) {
+		stateAfter = emitOperator(stateAfter, stateAfter.pendingRedirect);
+	}
+
 	const tokens = [...stateAfter.tokens];
 	const values = tokens.map((t) => t.value);
 	const singleQuotedIndices = new Set(
