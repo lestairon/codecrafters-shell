@@ -1,42 +1,45 @@
-import { createInterface } from "readline";
-import { stdin, stdout } from 'node:process'
-import resolveCommand from './resolver';
-import runCommand from './executer';
-import { parseLine } from './parser';
+import { stdin, stdout } from "node:process";
+import { createInterface } from "node:readline";
+import { runCommand } from "./executer";
+import { builtinNames } from "./executer/builtins";
+import { parseLine, structureLine } from "./parser";
+import resolveCommand, { setBuiltinNames } from "./resolver";
+
+setBuiltinNames(builtinNames);
 
 const rl = createInterface({
-  input: stdin,
-  output: stdout,
-  prompt: "$ ",
+	input: stdin,
+	output: stdout,
+	prompt: "$ ",
 });
 
 rl.prompt();
 
 rl.on("line", (line: string) => {
-  const result = parseLine(line);
-  if (!result.ok) {
-    console.error(result.message);
-    rl.prompt();
-    return;
-  }
+	const result = parseLine(line);
+	if (!result.ok) {
+		console.error(result.message);
+		rl.prompt();
+		return;
+	}
 
-  const { values } = result;
-  const [command, ...args] = values;
+	const { tokens } = result;
+	const commandLine = structureLine(tokens);
 
-  if (!command) {
-    rl.prompt();
-    return;
-  }
+	if (!commandLine.command) {
+		rl.prompt();
+		return;
+	}
 
-  const commandObj = resolveCommand(command);
+	const commandObj = resolveCommand(commandLine.command.value);
 
-  if (commandObj.kind === 'not_found') {
-    console.error(`${line}: command not found`);
-  } else {
-    runCommand(commandObj, [...args]);
-  }
+	if (!commandObj) {
+		console.error(`${line}: command not found`);
+	} else {
+		runCommand(commandObj, [...commandLine.args], commandLine.redirect);
+	}
 
-  rl.prompt();
+	rl.prompt();
 });
 
 export default rl;
