@@ -1,10 +1,12 @@
-import type { ParseResult } from "./types";
+import finish from "./finish";
 import { onChar } from "./handlers";
 import { INIT } from "./state";
-import finish from "./finish";
+import type { ParseResult } from "./types";
+
+export { structureLine } from "./structure";
 
 export function parseLine(line: string): ParseResult {
-  const state = [...line].reduce(onChar, INIT);
+	const state = [...line].reduce(onChar, INIT);
 
-  return finish(state);
+	return finish(state);
 }
