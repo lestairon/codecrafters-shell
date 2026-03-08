@@ -30,17 +30,24 @@ export function runCommand(
 		return;
 	}
 
-	const fd = openSync(redirect.target.value, redirect.operator.value.includes(">>") ? "a" : "w");
+	const fd = openSync(
+		redirect.target.value,
+		redirect.operator.value.includes(">>") ? "a" : "w",
+	);
 	try {
-    const fileWritable = {
-      write: (data: string) => {
-        writeSync(fd, data);
-        return true;
-      },
-    }
+		const fileWritable = {
+			write: (data: string) => {
+				writeSync(fd, data);
+				return true;
+			},
+		};
 		const io: CommandIO = {
-			stdout:  redirect.operator.value.startsWith("2") ? DEFAULT_IO.stdout : fileWritable,
-			stderr: redirect.operator.value.startsWith("2") ? fileWritable : DEFAULT_IO.stderr,
+			stdout: redirect.operator.value.startsWith("2")
+				? DEFAULT_IO.stdout
+				: fileWritable,
+			stderr: redirect.operator.value.startsWith("2")
+				? fileWritable
+				: DEFAULT_IO.stderr,
 		};
 
 		command.run(args, io);

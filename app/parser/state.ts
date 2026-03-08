@@ -40,9 +40,9 @@ function emitOperator(
 	return {
 		...state,
 		tokens: [...state.tokens, token],
-    current: "",
-    tokenStarted: false,
-    tokenQuoteType: null,
+		current: "",
+		tokenStarted: false,
+		tokenQuoteType: null,
 	};
 }
 

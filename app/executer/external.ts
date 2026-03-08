@@ -9,7 +9,10 @@ export function createExternalCommand(name: string, fullPath: string): Command {
 		run: (args: string[], io: CommandIO) => {
 			const result = spawnSync(name, args, {
 				stdio: "pipe",
-				env: { ...process.env, PATH: `${path.dirname(fullPath)}:${process.env.PATH}` },
+				env: {
+					...process.env,
+					PATH: `${path.dirname(fullPath)}:${process.env.PATH}`,
+				},
 			});
 			if (result.stdout) io.stdout.write(result.stdout.toString());
 			if (result.stderr) io.stderr.write(result.stderr.toString());

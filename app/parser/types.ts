@@ -28,7 +28,7 @@ export type ParseState = {
 	readonly tokenStarted: boolean;
 	readonly tokenQuoteType: Quote | null;
 	readonly escaped: boolean;
-  readonly pendingRedirect: OperatorToken["value"] | null;
+	readonly pendingRedirect: OperatorToken["value"] | null;
 };
 
 export type ParseSuccess = {

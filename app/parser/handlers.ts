@@ -27,17 +27,19 @@ function isEscapableInDoubleQuotes(ch: string): boolean {
 }
 
 function onChar(state: ParseState, ch: string): ParseState {
+	if (state.pendingRedirect) {
+		if (ch === ">") {
+			const operator = state.pendingRedirect === "2>" ? "2>>" : ">>";
 
-  if (state.pendingRedirect) {
-    if (ch === ">") {
-      const operator = state.pendingRedirect === "2>" ? "2>>" : ">>";
+			return emitOperator({ ...state, pendingRedirect: null }, operator);
+		}
 
-      return emitOperator({ ...state, pendingRedirect: null }, operator);
-    }
-
-    const next = emitOperator({ ...state, pendingRedirect: null }, state.pendingRedirect);
-    return onChar(next, ch);
-  }
+		const next = emitOperator(
+			{ ...state, pendingRedirect: null },
+			state.pendingRedirect,
+		);
+		return onChar(next, ch);
+	}
 
 	if (state.escaped) {
 		let next = { ...state, escaped: false };
@@ -75,8 +77,13 @@ function onChar(state: ParseState, ch: string): ParseState {
 				if (state.current === "1" && !state.tokenQuoteType) {
 					next = { ...state, current: "", tokenStarted: false };
 				} else if (state.current === "2" && !state.tokenQuoteType) {
-          return { ...state, current: "", tokenStarted: false, pendingRedirect: "2>" };
-        } else {
+					return {
+						...state,
+						current: "",
+						tokenStarted: false,
+						pendingRedirect: "2>",
+					};
+				} else {
 					next = emitToken(state);
 				}
 			}

@@ -11,10 +11,16 @@ const rl = createInterface({
 	input: stdin,
 	output: stdout,
 	prompt: "$ ",
-  completer: (line: string) => {
-    const completions = builtinNames.filter((name) => name.startsWith(line)).map((name) => `${name} `);
-    return [completions, line];
-  },
+	completer: (line: string) => {
+		const completions = builtinNames
+			.filter((name) => name.startsWith(line))
+			.map((name) => `${name} `);
+		if (!completions.length) {
+			stdout.write("\x07");
+		}
+
+		return [completions, line];
+	},
 });
 
 rl.prompt();
