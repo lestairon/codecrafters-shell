@@ -1,25 +1,26 @@
+type Writable = {
+	write(data: string): boolean | undefined;
+};
+
+type CommandIO = {
+	stdout: Writable;
+	stderr: Writable;
+};
+
 type Command = {
-  name: string;
-  description: string;
-  run: (args: string[]) => void;
+	name: string;
+	description: string;
+	run: (args: string[], io: CommandIO) => void;
+};
+
+export enum CommandKind {
+	BUILTIN = "builtin",
+	EXTERNAL = "external",
 }
 
 type Resolver = (cmd: string) => ResolveCommandResult | undefined;
-
 type ResolveCommandResult =
-  | { kind: 'builtin'; command: Command }
-  | ExternalCommand
-  | { kind: 'not_found'; command: string };
+	| { kind: CommandKind.BUILTIN; name: string }
+	| { kind: CommandKind.EXTERNAL; name: string; fullPath: string };
 
-type ExternalCommand = {
-  name: string;
-  path: string;
-  kind: 'external'
-}
-
-export type {
-  Command,
-  Resolver,
-  ResolveCommandResult,
-  ExternalCommand,
-}
+export type { CommandIO, Command, Resolver, ResolveCommandResult };
