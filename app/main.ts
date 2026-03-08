@@ -11,6 +11,10 @@ const rl = createInterface({
 	input: stdin,
 	output: stdout,
 	prompt: "$ ",
+  completer: (line: string) => {
+    const completions = builtinNames.filter((name) => name.startsWith(line)).map((name) => `${name} `);
+    return [completions, line];
+  },
 });
 
 rl.prompt();
