@@ -23,4 +23,4 @@ type ResolveCommandResult =
 	| { kind: CommandKind.BUILTIN; name: string }
 	| { kind: CommandKind.EXTERNAL; name: string; fullPath: string };
 
-export type { CommandIO, Command, Resolver, ResolveCommandResult };
+export type { Writable, CommandIO, Command, Resolver, ResolveCommandResult };
