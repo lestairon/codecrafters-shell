@@ -62,7 +62,9 @@ function onChar(state: ParseState, ch: string): ParseState {
 			if (state.tokenStarted) {
 				if (state.current === "1" && !state.tokenQuoteType) {
 					next = { ...state, current: "", tokenStarted: false };
-				} else {
+				} else if (state.current === "2" && !state.tokenQuoteType) {
+					return emitOperator(next, "2>");
+        } else {
 					next = emitToken(state);
 				}
 			}

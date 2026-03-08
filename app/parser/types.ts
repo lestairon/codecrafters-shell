@@ -16,7 +16,7 @@ export type WordToken = {
 
 export type OperatorToken = {
 	readonly kind: TokenKind.OPERATOR;
-	readonly value: ">";
+	readonly value: ">" | "2>";
 };
 
 export type Token = WordToken | OperatorToken;

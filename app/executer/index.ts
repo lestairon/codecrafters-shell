@@ -32,14 +32,15 @@ export function runCommand(
 
 	const fd = openSync(redirect.target.value, "w");
 	try {
+    const fileWritable = {
+      write: (data: string) => {
+        writeSync(fd, data);
+        return true;
+      },
+    }
 		const io: CommandIO = {
-			stdout: {
-				write: (data: string) => {
-					writeSync(fd, data);
-					return true;
-				},
-			},
-			stderr: process.stderr,
+			stdout:  redirect.operator.value === ">" ? fileWritable : DEFAULT_IO.stdout,
+			stderr: redirect.operator.value === "2>" ? fileWritable : DEFAULT_IO.stderr,
 		};
 
 		command.run(args, io);
