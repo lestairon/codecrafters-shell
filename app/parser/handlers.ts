@@ -60,7 +60,11 @@ function onChar(state: ParseState, ch: string): ParseState {
 			let next = state;
 
 			if (state.tokenStarted) {
-				next = emitToken(state);
+				if (state.current === "1" && !state.tokenQuoteType) {
+					next = { ...state, current: "", tokenStarted: false };
+				} else {
+					next = emitToken(state);
+				}
 			}
 
 			return emitOperator(next, ">");

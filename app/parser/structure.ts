@@ -26,7 +26,6 @@ export function structureLine(tokens: readonly Token[]): CommandLine {
 		throw new Error("syntax error: expected filename after redirect operator");
 	}
 
-	// const values = before.map((t) => t.value);
 	const [command, ...args] = before;
 
 	const redirect: Redirect = { operator, target };
