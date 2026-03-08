@@ -179,4 +179,44 @@ describe("createCompleter", () => {
 		expect(matches).toEqual(["only_file.txt "]);
 		expect(line).toBe("");
 	});
+
+	test("nested file completion", () => {
+		setBuiltinNames(["cat"]);
+		mkdirSync(join(tmp, "dir"));
+		writeFileSync(join(tmp, "dir", "file.txt"), "");
+
+		const { writable } = mockOut();
+		const completer = createCompleter(writable);
+		const [matches, line] = completer("cat dir/");
+
+		expect(matches).toEqual(["dir/file.txt "]);
+		expect(line).toBe("dir/");
+	});
+
+	test("deeply nested file completion preserves full path", () => {
+		setBuiltinNames(["wc"]);
+		mkdirSync(join(tmp, "orange", "strawberry"), { recursive: true });
+		writeFileSync(join(tmp, "orange", "strawberry", "pear.txt"), "");
+
+		const { writable } = mockOut();
+		const completer = createCompleter(writable);
+		const [matches, line] = completer("wc orange/strawberry/");
+
+		expect(matches).toEqual(["orange/strawberry/pear.txt "]);
+		expect(line).toBe("orange/strawberry/");
+	});
+
+	test("search files in subdirectories", () => {
+		setBuiltinNames(["cat"]);
+		mkdirSync(join(tmp, "dir"), { recursive: true });
+		writeFileSync(join(tmp, "dir", "file.txt"), "");
+		writeFileSync(join(tmp, "dir", "file2.txt"), "");
+
+		const { writable } = mockOut();
+		const completer = createCompleter(writable);
+		const [matches, line] = completer("cat file");
+
+		expect(matches).toEqual(["dir/file.txt ", "dir/file2.txt "]);
+		expect(line).toBe("dir/");
+	});
 });
