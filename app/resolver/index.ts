@@ -1,29 +1,26 @@
 import path from "node:path";
-import type { Resolver, ResolveCommandResult } from "../types";
-import { findBuiltIn, findInCwd, findInPath } from './helpers';
+import type { ResolveCommandResult, Resolver } from "../types";
+import { findBuiltIn, findInCwd, findInPath, setBuiltinNames } from "./helpers";
+export { setBuiltinNames };
 
-const resolvers: Resolver[] = [
-  findBuiltIn,
-  findInCwd,
-  findInPath
-]
+const resolvers: Resolver[] = [findBuiltIn, findInCwd, findInPath];
 
 export function resolveHomeDir(filePath: string): string {
-  if (filePath.startsWith('~')) {
-    const homeDir = process.env.HOME || '';
+	if (filePath.startsWith("~")) {
+		const homeDir = process.env.HOME || "";
 
-    return path.join(homeDir, filePath.slice(1));
-  }
+		return path.join(homeDir, filePath.slice(1));
+	}
 
-  return filePath;
+	return filePath;
 }
 
-export default function resolveCommand(command: string): ResolveCommandResult {
-  for (const resolver of resolvers) {
-    const result = resolver(command);
+export default function resolveCommand(
+	command: string,
+): ResolveCommandResult | undefined {
+	for (const resolver of resolvers) {
+		const result = resolver(command);
 
-    if (result) return result;
-  }
-
-  return { kind: 'not_found', command }
+		if (result) return result;
+	}
 }
