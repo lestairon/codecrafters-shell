@@ -1,3 +1,4 @@
+import { readdirSync } from "node:fs";
 import { parseLine, structureLine } from "./parser";
 import type { CommandLine } from "./parser/types";
 import { searchCommands } from "./resolver";
@@ -28,6 +29,42 @@ function longestCommonPrefix(names: string[]): string {
 	return names.reduce(sharedPrefix);
 }
 
+function searchFiles(prefix: string): string[] {
+	try {
+		return readdirSync(process.cwd())
+			.filter((name) => name.startsWith(prefix))
+			.sort();
+	} catch {
+		return [];
+	}
+}
+
+function resolveNameCompletion(
+	names: string[],
+	prefix: string,
+	line: string,
+	lastTab: string | null,
+): [CompletionAction, string | null] {
+	if (!names.length)
+		return [{ kind: CompletionActionKind.NONE, bell: true }, null];
+
+	if (names.length === 1)
+		return [
+			{ kind: CompletionActionKind.SINGLE, name: names[0], prefix },
+			null,
+		];
+
+	const lcp = longestCommonPrefix(names);
+
+	if (lcp.length > prefix.length)
+		return [{ kind: CompletionActionKind.PARTIAL, lcp, prefix }, null];
+
+	if (lastTab === line)
+		return [{ kind: CompletionActionKind.SHOW_ALL, line, names }, null];
+
+	return [{ kind: CompletionActionKind.NONE, bell: true }, line];
+}
+
 function determineCompletion(
 	line: string,
 	lastTab: string | null,
@@ -46,31 +83,20 @@ function determineCompletion(
 	if (!commandLine.command)
 		return [{ kind: CompletionActionKind.NONE, bell: true }, lastTab];
 
+	const trimmed = line.trimStart();
+	const lastSpaceIdx = trimmed.lastIndexOf(" ");
+
+	if (lastSpaceIdx !== -1) {
+		const prefix = trimmed.slice(lastSpaceIdx + 1);
+		const matches = searchFiles(prefix);
+		return resolveNameCompletion(matches, prefix, line, lastTab);
+	}
+
 	const prefix = commandLine.command.value;
 	const matches = searchCommands(prefix);
 	const uniqueNames = [...new Set(matches.map((c) => c.name))].sort();
 
-	if (!uniqueNames.length)
-		return [{ kind: CompletionActionKind.NONE, bell: true }, null];
-
-	if (uniqueNames.length === 1)
-		return [
-			{ kind: CompletionActionKind.SINGLE, name: uniqueNames[0], prefix },
-			null,
-		];
-
-	const lcp = longestCommonPrefix(uniqueNames);
-
-	if (lcp.length > prefix.length)
-		return [{ kind: CompletionActionKind.PARTIAL, lcp, prefix }, null];
-
-	if (lastTab === line)
-		return [
-			{ kind: CompletionActionKind.SHOW_ALL, line, names: uniqueNames },
-			null,
-		];
-
-	return [{ kind: CompletionActionKind.NONE, bell: true }, line];
+	return resolveNameCompletion(uniqueNames, prefix, line, lastTab);
 }
 
 function applyCompletionAction(

@@ -119,4 +119,64 @@ describe("createCompleter", () => {
 		expect(matches).toEqual(["zztest_cmd "]);
 		expect(line).toBe("zztest");
 	});
+
+	test("completes single filename in argument position", () => {
+		setBuiltinNames(["cat"]);
+		writeFileSync(join(tmp, "readme.md"), "");
+
+		const { writable } = mockOut();
+		const completer = createCompleter(writable);
+		const [matches, line] = completer("cat read");
+		expect(matches).toEqual(["readme.md "]);
+		expect(line).toBe("read");
+	});
+
+	test("no filename matches rings bell", () => {
+		setBuiltinNames(["cat"]);
+
+		const { writable, outRef } = mockOut();
+		const completer = createCompleter(writable);
+		const [matches, line] = completer("cat zzz_no_file");
+		expect(matches).toEqual([]);
+		expect(line).toBe("cat zzz_no_file");
+		expect(outRef()).toContain("\x07");
+	});
+
+	test("partial filename completion via LCP", () => {
+		setBuiltinNames(["cat"]);
+		writeFileSync(join(tmp, "readme.md"), "");
+		writeFileSync(join(tmp, "readme.txt"), "");
+
+		const { writable } = mockOut();
+		const completer = createCompleter(writable);
+		const [matches, line] = completer("cat read");
+		expect(matches).toEqual(["readme."]);
+		expect(line).toBe("read");
+	});
+
+	test("double-tab shows all matching filenames", () => {
+		setBuiltinNames(["cat"]);
+		writeFileSync(join(tmp, "readme.md"), "");
+		writeFileSync(join(tmp, "readme.txt"), "");
+
+		const { writable, outRef } = mockOut();
+		const completer = createCompleter(writable);
+		completer("cat readme.");
+		const [matches, line] = completer("cat readme.");
+		expect(matches).toEqual([]);
+		expect(line).toBe("cat readme.");
+		expect(outRef()).toContain("readme.md");
+		expect(outRef()).toContain("readme.txt");
+	});
+
+	test("trailing space after command triggers filename completion", () => {
+		setBuiltinNames(["cat"]);
+		writeFileSync(join(tmp, "only_file.txt"), "");
+
+		const { writable } = mockOut();
+		const completer = createCompleter(writable);
+		const [matches, line] = completer("cat ");
+		expect(matches).toEqual(["only_file.txt "]);
+		expect(line).toBe("");
+	});
 });
