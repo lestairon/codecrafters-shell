@@ -8,6 +8,7 @@ const INIT: ParseState = {
 	tokenStarted: false,
 	tokenQuoteType: null,
 	escaped: false,
+	pendingRedirect: null,
 };
 
 function append(state: ParseState, ch: string): ParseState {

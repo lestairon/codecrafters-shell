@@ -16,7 +16,7 @@ export type WordToken = {
 
 export type OperatorToken = {
 	readonly kind: TokenKind.OPERATOR;
-	readonly value: ">" | "2>";
+	readonly value: ">" | "2>" | "2>>" | ">>";
 };
 
 export type Token = WordToken | OperatorToken;
@@ -28,6 +28,7 @@ export type ParseState = {
 	readonly tokenStarted: boolean;
 	readonly tokenQuoteType: Quote | null;
 	readonly escaped: boolean;
+  readonly pendingRedirect: OperatorToken["value"] | null;
 };
 
 export type ParseSuccess = {
