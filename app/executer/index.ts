@@ -1,26 +1,49 @@
-import type { ResolveCommandResult, ExternalCommand } from "../types";
-import { spawnSync } from "child_process";
-import { cwd, chdir } from 'node:process';
+import { closeSync, openSync, writeSync } from "node:fs";
+import type { Redirect } from "../parser/types";
+import type { Command, CommandIO, ResolveCommandResult } from "../types";
+import { CommandKind } from "../types";
+import commands from "./builtins";
+import { createExternalCommand } from "./external";
 
-function runCommand(commandResult: ResolveCommandResult, args: string[]) {
-  switch (commandResult.kind) {
-    case 'builtin': {
-      commandResult.command.run(args);
-      
-      break;
-    }
-    case 'external': {
-      runExternal(commandResult, args);
+const DEFAULT_IO: CommandIO = {
+	stdout: process.stdout,
+	stderr: process.stderr,
+};
 
-      break;
-    }
-  }
+export function getCommand(result: ResolveCommandResult): Command {
+	if (result.kind === CommandKind.BUILTIN) {
+		return commands.find((c) => c.name === result.name) as Command;
+	}
+
+	return createExternalCommand(result.name, result.fullPath);
 }
 
-function runExternal(command: ExternalCommand, args: string[]) {
-  spawnSync(command.name, args, {
-    stdio: 'inherit'
-  });
-}
+export function runCommand(
+	commandResult: ResolveCommandResult,
+	args: string[],
+	redirect?: Redirect,
+) {
+	const command = getCommand(commandResult);
 
-export default runCommand;
+	if (!redirect) {
+		command.run(args, DEFAULT_IO);
+		return;
+	}
+
+	const fd = openSync(redirect.target.value, "w");
+	try {
+		const io: CommandIO = {
+			stdout: {
+				write: (data: string) => {
+					writeSync(fd, data);
+					return true;
+				},
+			},
+			stderr: process.stderr,
+		};
+
+		command.run(args, io);
+	} finally {
+		closeSync(fd);
+	}
+}
