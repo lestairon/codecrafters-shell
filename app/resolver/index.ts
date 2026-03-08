@@ -19,8 +19,12 @@ export default function resolveCommand(
 	command: string,
 ): ResolveCommandResult | undefined {
 	for (const resolver of resolvers) {
-		const result = resolver(command);
+		const exact = resolver(command).find((r) => r.name === command);
 
-		if (result) return result;
+		if (exact) return exact;
 	}
+}
+
+export function searchCommands(prefix: string): ResolveCommandResult[] {
+	return resolvers.flatMap((resolver) => resolver(prefix));
 }

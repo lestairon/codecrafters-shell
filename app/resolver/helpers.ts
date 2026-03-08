@@ -10,30 +10,43 @@ function setBuiltinNames(names: string[]) {
 	builtinNames = new Set(names);
 }
 
-function findBuiltIn(command: string): ResolveCommandResult | undefined {
-	if (builtinNames.has(command)) {
-		return { kind: CommandKind.BUILTIN, name: command };
+function findBuiltIn(command: string): ResolveCommandResult[] {
+	return [...builtinNames]
+		.filter((name) => name.startsWith(command))
+		.map((name) => ({ kind: CommandKind.BUILTIN, name }));
+}
+
+function readDirSafe(dir: string): string[] {
+	try {
+		return fs.readdirSync(dir);
+	} catch {
+		return [];
 	}
 }
 
-function findInCwd(command: string): ResolveCommandResult | undefined {
-	const fullPath = path.join(cwd(), command);
-
-	if (fs.existsSync(fullPath) && checkAccess(fullPath)) {
-		return { kind: CommandKind.EXTERNAL, name: command, fullPath };
-	}
+function findMatchesIn(
+	dir: string,
+	prefix: string,
+	executableOnly = true,
+): ResolveCommandResult[] {
+	return readDirSafe(dir)
+		.filter((name) => name.startsWith(prefix))
+		.filter((name) => !executableOnly || checkAccess(path.join(dir, name)))
+		.map((name) => ({
+			kind: CommandKind.EXTERNAL,
+			name,
+			fullPath: path.join(dir, name),
+		}));
 }
 
-function findInPath(command: string): ResolveCommandResult | undefined {
+function findInCwd(command: string): ResolveCommandResult[] {
+	return findMatchesIn(cwd(), command, false);
+}
+
+function findInPath(command: string): ResolveCommandResult[] {
 	const paths = process.env.PATH?.split(path.delimiter) ?? [];
 
-	for (const dir of paths) {
-		const fullPath = path.join(dir, command);
-
-		if (fs.existsSync(fullPath) && checkAccess(fullPath)) {
-			return { kind: CommandKind.EXTERNAL, name: command, fullPath };
-		}
-	}
+	return paths.flatMap((dir) => findMatchesIn(dir, command));
 }
 
 function checkAccess(file: string): boolean {

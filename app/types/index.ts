@@ -18,7 +18,7 @@ export enum CommandKind {
 	EXTERNAL = "external",
 }
 
-type Resolver = (cmd: string) => ResolveCommandResult | undefined;
+type Resolver = (cmd: string) => ResolveCommandResult[];
 type ResolveCommandResult =
 	| { kind: CommandKind.BUILTIN; name: string }
 	| { kind: CommandKind.EXTERNAL; name: string; fullPath: string };

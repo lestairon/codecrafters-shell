@@ -3,7 +3,7 @@ import { createInterface } from "node:readline";
 import { runCommand } from "./executer";
 import { builtinNames } from "./executer/builtins";
 import { parseLine, structureLine } from "./parser";
-import resolveCommand, { setBuiltinNames } from "./resolver";
+import resolveCommand, { searchCommands, setBuiltinNames } from "./resolver";
 
 setBuiltinNames(builtinNames);
 
@@ -12,14 +12,27 @@ const rl = createInterface({
 	output: stdout,
 	prompt: "$ ",
 	completer: (line: string) => {
-		const completions = builtinNames
-			.filter((name) => name.startsWith(line))
-			.map((name) => `${name} `);
-		if (!completions.length) {
+		const result = parseLine(line);
+		if (!result.ok) {
+			stdout.write("\x07");
+			return [[], line];
+		}
+
+		const { tokens } = result;
+		const commandLine = structureLine(tokens);
+		if (!commandLine.command) {
+			stdout.write("\x07");
+			return [[], line];
+		}
+
+		const prefix = commandLine.command.value;
+		const matches = searchCommands(prefix).map((c) => `${c.name} `);
+
+		if (!matches.length) {
 			stdout.write("\x07");
 		}
 
-		return [completions, line];
+		return [matches, prefix];
 	},
 });
 
