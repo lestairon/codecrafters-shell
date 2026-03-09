@@ -219,4 +219,89 @@ describe("createCompleter", () => {
 		expect(matches).toEqual(["dir/file.txt ", "dir/file2.txt "]);
 		expect(line).toBe("dir/");
 	});
+
+	test("single directory match completes with trailing slash", () => {
+		setBuiltinNames(["cat"]);
+		mkdirSync(join(tmp, "mydir"));
+
+		const { writable } = mockOut();
+		const completer = createCompleter(writable);
+		const [matches, line] = completer("cat mydir");
+
+		expect(matches).toEqual(["mydir/"]);
+		expect(line).toBe("mydir");
+	});
+
+	test("mixed files and dirs show correct suffixes", () => {
+		setBuiltinNames(["cat"]);
+		mkdirSync(join(tmp, "dir"));
+		writeFileSync(join(tmp, "data.txt"), "");
+
+		const { writable, outRef } = mockOut();
+		const completer = createCompleter(writable);
+		completer("cat d");
+		const [matches, line] = completer("cat d");
+
+		expect(matches).toEqual([]);
+		expect(line).toBe("cat d");
+		expect(outRef()).toContain("data.txt ");
+		expect(outRef()).toContain("dir/");
+	});
+
+	test("directory in nested path completes with slash", () => {
+		setBuiltinNames(["cat"]);
+		mkdirSync(join(tmp, "foo", "bar"), { recursive: true });
+		writeFileSync(join(tmp, "foo", "file.txt"), "");
+
+		const { writable, outRef } = mockOut();
+		const completer = createCompleter(writable);
+		completer("cat foo/");
+		const [matches, line] = completer("cat foo/");
+
+		expect(matches).toEqual([]);
+		expect(line).toBe("cat foo/");
+		expect(outRef()).toContain("foo/bar/");
+		expect(outRef()).toContain("foo/file.txt ");
+	});
+
+	test("multiple directories complete via LCP", () => {
+		setBuiltinNames(["cat"]);
+		mkdirSync(join(tmp, "dir1"));
+		mkdirSync(join(tmp, "dir2"));
+
+		const { writable } = mockOut();
+		const completer = createCompleter(writable);
+		const [matches, line] = completer("cat d");
+
+		expect(matches).toEqual(["dir"]);
+		expect(line).toBe("d");
+	});
+
+	test("trailing space with only directories lists both with slashes", () => {
+		setBuiltinNames(["cat"]);
+		mkdirSync(join(tmp, "alpha"));
+		mkdirSync(join(tmp, "beta"));
+
+		const { writable, outRef } = mockOut();
+		const completer = createCompleter(writable);
+		completer("cat ");
+		const [matches, line] = completer("cat ");
+
+		expect(matches).toEqual([]);
+		expect(line).toBe("cat ");
+		expect(outRef()).toContain("alpha/");
+		expect(outRef()).toContain("beta/");
+	});
+
+	test("single subdirectory in nested path completes with slash", () => {
+		setBuiltinNames(["cat"]);
+		mkdirSync(join(tmp, "foo", "bar"), { recursive: true });
+
+		const { writable } = mockOut();
+		const completer = createCompleter(writable);
+		const [matches, line] = completer("cat foo/");
+
+		expect(matches).toEqual(["foo/bar/"]);
+		expect(line).toBe("foo/");
+	});
 });

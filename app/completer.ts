@@ -7,6 +7,8 @@ import type { Writable } from "./types";
 
 type CompletionResult = [string[], string];
 
+type FileEntry = { path: string; isDirectory: boolean };
+
 function sharedPrefix(a: string, b: string): string {
 	const end = [...a].findIndex((ch, i) => ch !== b[i]);
 	return end === -1 ? a : a.slice(0, end);
@@ -17,15 +19,22 @@ function longestCommonPrefix(names: string[]): string {
 	return names.reduce(sharedPrefix);
 }
 
-function searchFiles(prefix: string, dirPath: string): string[] {
+function searchFiles(prefix: string, dirPath: string): FileEntry[] {
 	try {
 		const resolvedDir = path.isAbsolute(dirPath)
 			? dirPath
 			: path.join(process.cwd(), dirPath);
-		return readdirSync(resolvedDir)
-			.sort()
-			.filter((name) => name.startsWith(prefix))
-			.map((name) => path.join(dirPath, name));
+		return readdirSync(resolvedDir, { withFileTypes: true })
+			.filter(
+				(entry) =>
+					entry.name.startsWith(prefix) &&
+					(entry.isFile() || entry.isDirectory()),
+			)
+			.sort((a, b) => a.name.localeCompare(b.name))
+			.map((entry) => ({
+				path: path.join(dirPath, entry.name),
+				isDirectory: entry.isDirectory(),
+			}));
 	} catch {
 		return [];
 	}
@@ -55,6 +64,39 @@ function searchFilesRecursively(prefix: string): string[] {
 
 function bell(out: Writable): void {
 	out.write("\x07");
+}
+
+function suffix(entry: FileEntry): string {
+	return entry.isDirectory ? "/" : " ";
+}
+
+function resolveFileCompletion(
+	entries: FileEntry[],
+	prefix: string,
+	line: string,
+	lastTab: string | null,
+	out: Writable,
+): [CompletionResult, string | null] {
+	if (!entries.length) {
+		bell(out);
+		return [[[], line], null];
+	}
+
+	if (entries.length === 1)
+		return [[[`${entries[0].path}${suffix(entries[0])}`], prefix], null];
+
+	const paths = entries.map((e) => e.path);
+	const lcp = longestCommonPrefix(paths);
+	if (lcp.length > prefix.length) return [[[lcp], prefix], null];
+
+	if (lastTab === line) {
+		const display = entries.map((e) => `${e.path}${suffix(e)}`);
+		out.write(`\n${display.join("  ")}\n$ ${line}`);
+		return [[[], line], null];
+	}
+
+	bell(out);
+	return [[[], line], line];
 }
 
 function resolveCompletion(
@@ -96,7 +138,7 @@ function completeFilename(
 
 	const direct = searchFiles(prefix, searchDir);
 	if (direct.length)
-		return resolveCompletion(direct, filename, line, lastTab, out);
+		return resolveFileCompletion(direct, filename, line, lastTab, out);
 
 	if (!trailingSlash && searchDir === "." && prefix) {
 		const recursive = searchFilesRecursively(prefix);
